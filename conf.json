@@ -1,0 +1,25 @@
+{
+  "log_dir": "log",
+  "root_path": "F:\\projects\\pgauth",
+  "debug": true,
+  "connections": [
+    {
+      "name": "main",
+      "class": "Wwtg99\\DataPool\\Connections\\DatabaseConnection",
+      "mapper_path": "Wwtg99\\PgAuth\\Mapper",
+      "database": {
+        "driver": "pgsql",
+        "dbname": "auth_test",
+        "host": "192.168.0.21",
+        "username": "genobase",
+        "password": "genobase",
+        "port": 5432
+      },
+      "logger": {
+        "level": "DEBUG",
+        "title": "main.log",
+        "max_logfile": 5
+      }
+    }
+  ]
+}
