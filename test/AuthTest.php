@@ -67,7 +67,7 @@ class AuthTest extends PHPUnit_Framework_TestCase
     public function testUser()
     {
         $user = $this->pool->getConnection('main')->getMapper('User');
-        $data1 = ['name'=>'u1', 'label'=>'user1', 'email'=>'u@u.com', 'descr'=>'rrr', 'department_id'=>'d1'];
+        $data1 = ['name'=>'u1', 'label'=>'user1', 'email'=>'u@u.com', 'descr'=>'rrr', 'department_id'=>'d1', 'params'=>'{"a":"b"}'];
         $uid = $user->insert($data1);
         self::assertTrue($uid != false);
         $data1_update = ['name'=>'user1', 'descr'=>'ggg'];

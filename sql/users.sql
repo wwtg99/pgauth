@@ -32,6 +32,7 @@ CREATE TABLE public.users (
   descr TEXT,
   department_id TEXT REFERENCES public.departments (department_id) ON UPDATE CASCADE,
   superuser BOOLEAN NOT NULL DEFAULT FALSE,
+  params JSONB,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   deleted_at TIMESTAMP WITH TIME ZONE
