@@ -74,7 +74,7 @@ class User extends ArrayPgInsertMapper
      */
     public function activeUser($user_id, $active = true)
     {
-        $b = (string)$active;
+        $b = $active ? 'true' : 'false';
         $re = $this->connection->getEngine()->query(["select active_user('$user_id', $b)", [], true]);
         if ($re) {
             return $re['active_user'];

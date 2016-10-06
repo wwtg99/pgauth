@@ -9,17 +9,11 @@
 namespace Wwtg99\PgAuth\Auth;
 
 
-use Wwtg99\Config\Common\IConfig;
-use Wwtg99\DataPool\Common\DefaultDataPool;
+use Wwtg99\DataPool\Common\IDataConnection;
 use Wwtg99\PgAuth\Utils\Cache;
 
-class NormalAuth implements IAuth
+class NormalAuth extends AbstractAuth
 {
-
-    /**
-     * @var IConfig
-     */
-    protected $config;
 
     /**
      * @var \Desarrolla2\Cache\Cache
@@ -32,27 +26,32 @@ class NormalAuth implements IAuth
     protected $conn = null;
 
     /**
+     * @var int
+     */
+    protected $tokenTtl = 3600;
+
+    /**
      * @var string
      */
     protected $msg = '';
 
     /**
      * NormalAuth constructor.
-     * @param IConfig $config
+     *
+     * @param IDataConnection $conn
+     * @param array $config
      */
-    public function __construct($config = null)
+    public function __construct($conn = null, $config = null)
     {
-        $this->config = $config;
-        if ($this->config->has('cache')) {
-            $ch = $this->config->get('cache');
+        if (isset($config['cache'])) {
+            $ch = $config['cache'];
             if (isset($ch['type']) && isset($ch['options']))
             $this->cache = Cache::getCache($ch['type'], $ch['options']);
         }
-        if ($this->config->has('connection')) {
-            $cpool = new DefaultDataPool($this->config->get('connection'));
-            $conn = $this->config->get('conn_name', 'main');
-            $this->conn = $cpool->getConnection($conn);
+        if (isset($config['token_ttl'])) {
+            $this->tokenTtl = $config['token_ttl'];
         }
+        $this->conn = $conn;
     }
 
     /**
@@ -115,8 +114,7 @@ class NormalAuth implements IAuth
             $this->msg = 'Sign in successfully!';
             //store token in cache
             $token = $u->getUser()[IAuth::KEY_USER_TOKEN];
-            $ttl = $this->config->get('token_ttl');
-            $this->cache->set($token, json_encode($u->getUser()), $ttl);
+            $this->cache->set($token, json_encode($u->getUser(), JSON_UNESCAPED_UNICODE), $this->tokenTtl);
         }
         return $u;
     }
@@ -144,10 +142,8 @@ class NormalAuth implements IAuth
         if (isset($user[self::KEY_USER_TOKEN])) {
             //check access token
             $token = $user[self::KEY_USER_TOKEN];
-            echo "=====$token\n";
             if ($this->cache->has($token)) {
                 $u = $this->cache->get($token);
-                echo "=====$u\n";
                 if ($u) {
                     $user = json_decode($u, true);
                     if (isset($user[IUser::FIELD_USER_ID])) {
@@ -159,11 +155,12 @@ class NormalAuth implements IAuth
         } elseif (isset($user[IAuth::KEY_USER_NAME]) && isset($user[IAuth::KEY_USER_PASSWORD])) {
             //check name and password
             $userModel = $this->conn->getMapper('User');
-            $u = $userModel->view('*', [IUser::FIELD_USER_NAME => $user[IAuth::KEY_USER_NAME]]);
+            $u = $userModel->view('*', ['AND'=>[IUser::FIELD_USER_NAME => $user[IAuth::KEY_USER_NAME], 'deleted_at'=>null]]);
             if ($u && isset($u[0])) {
                 $u = $u[0];
                 $pwd = $u[IUser::FIELD_PASSWORD];
                 if (is_null($pwd) || password_verify($user[IAuth::KEY_USER_PASSWORD], $pwd)) {
+                    //generate access token
                     $token = substr(md5($u[IUser::FIELD_USER_ID] . mt_rand(0, 1000) . time()), 3, 10);
                     unset($u[IUser::FIELD_PASSWORD]);
                     $u[IAuth::KEY_USER_TOKEN] = $token;
@@ -188,14 +185,5 @@ class NormalAuth implements IAuth
         $this->msg = 'Verify user failed!';
         return null;
     }
-
-    /**
-     * @return string
-     */
-    public function getMessage()
-    {
-        return $this->msg;
-    }
-
 
 }

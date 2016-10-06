@@ -54,7 +54,9 @@ class NormalUser extends AbstractUser
             }
             unset($user[self::FIELD_ROLES]);
         }
-        return $u->update($user, null, $uid);
+        $re = $u->update($user, null, $uid);
+        $this->refreshUser();
+        return boolval($re);
     }
 
     /**
@@ -76,7 +78,9 @@ class NormalUser extends AbstractUser
     {
         $u = $this->getUserMapper();
         $uid = $this->user[self::FIELD_USER_ID];
-        return $u->activeUser($uid, true);
+        $re = $u->activeUser($uid, true);
+        $this->refreshUser();
+        return $re;
     }
 
     /**
@@ -86,7 +90,9 @@ class NormalUser extends AbstractUser
     {
         $u = $this->getUserMapper();
         $uid = $this->user[self::FIELD_USER_ID];
-        return $u->activeUser($uid, false);
+        $re = $u->activeUser($uid, false);
+        $this->refreshUser();
+        return $re;
     }
 
     /**
@@ -95,6 +101,14 @@ class NormalUser extends AbstractUser
     protected function getUserMapper()
     {
         return $this->conn->getMapper('User');
+    }
+
+    protected function refreshUser()
+    {
+        $u = $this->getUserMapper()->get($this->user[IUser::FIELD_USER_ID]);
+        if ($u) {
+            $this->user = $u;
+        }
     }
 
 }

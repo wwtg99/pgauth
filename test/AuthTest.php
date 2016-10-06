@@ -99,6 +99,11 @@ class AuthTest extends PHPUnit_Framework_TestCase
         $re = $user->view('*', ['user_id'=>$uid]);
         self::assertTrue($re != false);
         self::assertEquals('role1', $re[0]['roles']);
+        //active
+        $re = $user->activeUser($uid, false);
+        self::assertTrue($re);
+        $re = $user->activeUser($uid, true);
+        self::assertTrue($re);
     }
 
     public function testUserLog()
