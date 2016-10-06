@@ -9,6 +9,7 @@ CREATE TABLE public.departments (
   department_id TEXT PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   descr TEXT,
+  params JSONB,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
@@ -17,6 +18,7 @@ CREATE TABLE public.roles (
   role_id SERIAL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   descr TEXT,
+  params JSONB,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
@@ -107,14 +109,18 @@ END;
 $BODY$ LANGUAGE plpgsql
 SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION public.active_user(in_user_id TEXT)
+CREATE OR REPLACE FUNCTION public.active_user(in_user_id TEXT, in_active BOOL DEFAULT TRUE)
   RETURNS BOOLEAN AS $BODY$
 DECLARE
   _id TEXT;
 BEGIN
-  SELECT user_id INTO _id FROM public.users WHERE user_id = in_user_id AND deleted_at IS NOT NULL;
+  SELECT user_id INTO _id FROM public.users WHERE user_id = in_user_id;
   IF FOUND THEN
-    UPDATE public.users SET deleted_at = NULL WHERE user_id = _id;
+    IF in_active THEN
+      UPDATE public.users SET deleted_at = NULL WHERE user_id = _id;
+    ELSE
+      UPDATE public.users SET deleted_at = now() WHERE user_id = _id;
+    END IF;
     RETURN TRUE;
   END IF;
   RETURN FALSE;

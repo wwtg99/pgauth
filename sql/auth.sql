@@ -10,6 +10,7 @@ CREATE TABLE public.apps (
   descr TEXT,
   app_secret TEXT NOT NULL,
   redirect_uri TEXT,
+  params JSONB,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );

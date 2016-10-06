@@ -68,6 +68,21 @@ class User extends ArrayPgInsertMapper
     }
 
     /**
+     * @param $user_id
+     * @param bool $active
+     * @return bool
+     */
+    public function activeUser($user_id, $active = true)
+    {
+        $b = (string)$active;
+        $re = $this->connection->getEngine()->query(["select active_user('$user_id', $b)", [], true]);
+        if ($re) {
+            return $re['active_user'];
+        }
+        return false;
+    }
+
+    /**
      * @param string $select
      * @param array $where
      * @return array

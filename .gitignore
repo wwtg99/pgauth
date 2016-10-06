@@ -3,3 +3,4 @@
 /vendor
 /log
 composer.lock
+php_errors.log
