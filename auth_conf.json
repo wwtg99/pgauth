@@ -1,0 +1,36 @@
+{
+  "connections": {
+    "log_dir": "log",
+    "root_path": "E:\\projects\\pgauth",
+    "debug": true,
+    "connections": [
+      {
+        "name": "main",
+        "class": "Wwtg99\\DataPool\\Connections\\DatabaseConnection",
+        "mapper_path": "Wwtg99\\PgAuth\\Mapper",
+        "database": {
+          "driver": "pgsql",
+          "dbname": "test2",
+          "host": "192.168.6.131",
+          "username": "wwu",
+          "password": "1",
+          "port": 5432
+        },
+        "logger": {
+          "level": "DEBUG",
+          "title": "main.log",
+          "max_logfile": 5
+        }
+      }
+    ]
+  },
+  "cache": {
+    "type": "redis",
+    "options": {
+      "schema": "tcp",
+      "host": "192.168.6.131",
+      "database": 6
+    }
+  },
+  "token_ttl": 200
+}

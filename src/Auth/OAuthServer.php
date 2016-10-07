@@ -16,6 +16,7 @@ class OAuthServer extends NormalAuth
 
     const FIELD_APP_ID = 'app_id';
     const FIELD_APP_REDIRECT_URI = 'redirect_uri';
+    const FIELD_APP_SECRET = 'app_secret';
 
     /**
      * @var int
@@ -68,8 +69,8 @@ class OAuthServer extends NormalAuth
     public function getCode(array $user)
     {
         if (isset($user[self::KEY_USER_NAME]) && isset($user[self::KEY_USER_PASSWORD])) {
-            $appid = $user[self::FIELD_APP_ID];
-            $reduri = $user[self::FIELD_APP_REDIRECT_URI];
+            $appid = isset($user[self::FIELD_APP_ID]) ? $user[self::FIELD_APP_ID] : '';
+            $reduri = isset($user[self::FIELD_APP_REDIRECT_URI]) ? $user[self::FIELD_APP_REDIRECT_URI] : '';
             $app = $this->getAppMapper()->getApp($appid, $reduri);
             if ($app) {
                 $u = $this->verify($user);
@@ -85,8 +86,9 @@ class OAuthServer extends NormalAuth
             } else {
                 $this->msg = 'Invalid app!';
             }
+        } else {
+            $this->msg = 'Invalid username or password!';
         }
-        $this->msg = 'Invalid username or password!';
         return null;
     }
 

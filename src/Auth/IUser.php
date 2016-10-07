@@ -16,6 +16,8 @@ interface IUser
     const FIELD_USER_NAME = 'name';
     const FIELD_PASSWORD = 'password';
     const FIELD_ROLES = 'roles';
+    const FIELD_LABEL = 'label';
+    const FIELD_EMAIL = 'email';
 
     /**
      * @param array $user

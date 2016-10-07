@@ -35,7 +35,7 @@ class UserTest extends PHPUnit_Framework_TestCase
         echo "\nMessage: " . $auth->getMessage();
         self::assertNotNull($u);
 //        var_dump($u->getUser());
-        $user2 = ['username'=>'u1', 'password'=>'1'];
+        $user2 = ['name'=>'u1', 'password'=>'1'];
         $u = $auth->signIn($user2);
         echo "\nMessage: " . $auth->getMessage();
         self::assertNotNull($u);

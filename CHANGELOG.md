@@ -2,6 +2,7 @@
 - Add json params to departments, roles and apps
 - Add Auth and User
 - Support NormalAuth and NormalUser
+- Add pgauth-cli
 
 ## 0.1.1
 - Add params to users
