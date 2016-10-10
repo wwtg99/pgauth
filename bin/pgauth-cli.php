@@ -169,31 +169,31 @@ function getUser(array $opts)
     } else {
         $u = [];
         if (isset($opts['user-id'])) {
-            $u[\Wwtg99\PgAuth\Auth\IUser::FIELD_USER_ID] = $opts['user-id'];
+            $u['user_id'] = $opts['user-id'];
         }
         if (isset($opts['user-name'])) {
-            $u[\Wwtg99\PgAuth\Auth\IUser::FIELD_USER_NAME] = $opts['user-name'];
+            $u['username'] = $opts['user-name'];
         }
         if (isset($opts['user-password'])) {
-            $u[\Wwtg99\PgAuth\Auth\IUser::FIELD_PASSWORD] = $opts['user-password'];
+            $u['password'] = $opts['user-password'];
         }
         if (isset($opts['user-label'])) {
-            $u[\Wwtg99\PgAuth\Auth\IUser::FIELD_LABEL] = $opts['user-label'];
+            $u['label'] = $opts['user-label'];
         }
         if (isset($opts['user-email'])) {
-            $u[\Wwtg99\PgAuth\Auth\IUser::FIELD_EMAIL] = $opts['user-email'];
+            $u['email'] = $opts['user-email'];
         }
         if (isset($opts['user-token'])) {
-            $u[\Wwtg99\PgAuth\Auth\IAuth::KEY_USER_TOKEN] = $opts['user-token'];
+            $u['access_token'] = $opts['user-token'];
         }
         if (isset($opts['app-id'])) {
-            $u[\Wwtg99\PgAuth\Auth\OAuthServer::FIELD_APP_ID] = $opts['app-id'];
+            $u['app_id'] = $opts['app-id'];
         }
         if (isset($opts['app-uri'])) {
-            $u[\Wwtg99\PgAuth\Auth\OAuthServer::FIELD_APP_REDIRECT_URI] = $opts['app-uri'];
+            $u['redirect_uri'] = $opts['app-uri'];
         }
         if (isset($opts['app-secret'])) {
-            $u['secret'] = $opts['app-secret'];
+            $u['app_secret'] = $opts['app-secret'];
         }
         if (isset($opts['app-code'])) {
             $u['code'] = $opts['app-code'];

@@ -1,7 +1,7 @@
 {
   "connections": {
     "log_dir": "log",
-    "root_path": "E:\\projects\\pgauth",
+    "root_path": "F:\\projects\\pgauth",
     "debug": true,
     "connections": [
       {
@@ -10,10 +10,10 @@
         "mapper_path": "Wwtg99\\PgAuth\\Mapper",
         "database": {
           "driver": "pgsql",
-          "dbname": "test2",
-          "host": "192.168.6.131",
-          "username": "wwu",
-          "password": "1",
+          "dbname": "auth_test",
+          "host": "192.168.0.21",
+          "username": "genobase",
+          "password": "genobase",
           "port": 5432
         },
         "logger": {
@@ -28,7 +28,7 @@
     "type": "redis",
     "options": {
       "schema": "tcp",
-      "host": "192.168.6.131",
+      "host": "192.168.0.21",
       "database": 6
     }
   },

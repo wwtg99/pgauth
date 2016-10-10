@@ -180,19 +180,6 @@ class NormalAuth extends AbstractAuth
                     $token = substr(md5($u[IUser::FIELD_USER_ID] . mt_rand(0, 1000) . time()), 3, 10);
                     unset($u[IUser::FIELD_PASSWORD]);
                     $u[$this->keyAccessToken] = $token;
-                    //check roles
-                    if (isset($u[IUser::FIELD_ROLES])) {
-                        $roles = $u[IUser::FIELD_ROLES];
-                        if (!is_array($roles)) {
-                            $roles = explode(',', $roles);
-                        }
-                        if (!in_array('common_user', $roles)) {
-                            array_push($roles, 'common_user');
-                        }
-                        $u[IUser::FIELD_ROLES] = $roles;
-                    } else {
-                        $u[IUser::FIELD_ROLES] = ['common_user'];
-                    }
                     $this->msg = 'User is valid!';
                     return new NormalUser($u, $this->conn);
                 }

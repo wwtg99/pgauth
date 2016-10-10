@@ -1,3 +1,7 @@
+## 0.1.4
+- Remove roles add common_user
+- Update pgauth-cli
+
 ## 0.1.3
 - Update OAuthServer keys to be configurable
 
