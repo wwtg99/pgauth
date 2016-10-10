@@ -26,6 +26,7 @@ class OAuthServer extends NormalAuth
     protected $keyAppId = 'app_id';
     protected $keyAppRedirectUri = 'redirect_uri';
     protected $keyAppSecret = 'app_secret';
+    protected $keyCode = 'code';
 
     /**
      * @var int
@@ -43,6 +44,18 @@ class OAuthServer extends NormalAuth
         parent::__construct($conn, $config);
         if (isset($config['code_ttl'])) {
             $this->codeTtl = $config['code_ttl'];
+        }
+        if (isset($config['key_app_id'])) {
+            $this->keyAppId = $config['key_app_id'];
+        }
+        if (isset($config['key_app_redirect_uri'])) {
+            $this->keyAppRedirectUri = $config['key_app_redirect_uri'];
+        }
+        if (isset($config['key_app_secret'])) {
+            $this->keyAppSecret = $config['key_app_secret'];
+        }
+        if (isset($config['key_code'])) {
+            $this->keyCode = $config['key_code'];
         }
     }
 
@@ -107,8 +120,8 @@ class OAuthServer extends NormalAuth
      */
     public function signIn(array $user)
     {
-        $code = isset($user['code']) ? $user['code'] : '';
-        $sec = isset($user['secret']) ? $user['secret'] : '';
+        $code = isset($user[$this->keyCode]) ? $user[$this->keyCode] : '';
+        $sec = isset($user[$this->keyAppSecret]) ? $user[$this->keyAppSecret] : '';
         if ($code && $sec) {
             $u = $this->checkCode($code, $sec);
             if ($u) {

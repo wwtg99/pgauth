@@ -1,3 +1,6 @@
+## 0.1.3
+- Update OAuthServer keys to be configurable
+
 ## 0.1.2
 - Add json params to departments, roles and apps
 - Add Auth and User
