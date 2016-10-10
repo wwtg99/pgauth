@@ -12,6 +12,12 @@ namespace Wwtg99\PgAuth\Auth;
 use Wwtg99\DataPool\Common\IDataConnection;
 use Wwtg99\PgAuth\Utils\Cache;
 
+/**
+ * Class NormalAuth
+ * Normal auth
+ * Verify by username and password or access_token and username.
+ * @package Wwtg99\PgAuth\Auth
+ */
 class NormalAuth extends AbstractAuth
 {
 
@@ -50,6 +56,15 @@ class NormalAuth extends AbstractAuth
         }
         if (isset($config['token_ttl'])) {
             $this->tokenTtl = $config['token_ttl'];
+        }
+        if (isset($config['key_user_name'])) {
+            $this->keyUserName = $config['key_user_name'];
+        }
+        if (isset($config['key_password'])) {
+            $this->keyPassword = $config['key_password'];
+        }
+        if (isset($config['key_access_token'])) {
+            $this->keyAccessToken = $config['key_access_token'];
         }
         $this->conn = $conn;
     }
@@ -113,7 +128,7 @@ class NormalAuth extends AbstractAuth
         if ($u) {
             $this->msg = 'Sign in successfully!';
             //store token in cache
-            $token = $u->getUser()[IAuth::KEY_USER_TOKEN];
+            $token = $u->getUser()[$this->keyAccessToken];
             $this->cache->set($token, json_encode($u->getUser(), JSON_UNESCAPED_UNICODE), $this->tokenTtl);
         }
         return $u;
@@ -125,7 +140,7 @@ class NormalAuth extends AbstractAuth
      */
     public function signOut(array $user)
     {
-        $token = isset($user[IAuth::KEY_USER_TOKEN]) ? $user[IAuth::KEY_USER_TOKEN] : null;
+        $token = isset($user[$this->keyAccessToken]) ? $user[$this->keyAccessToken] : null;
         if ($token) {
             $this->cache->delete($token);
         }
@@ -139,31 +154,32 @@ class NormalAuth extends AbstractAuth
      */
     public function verify(array $user)
     {
-        if (isset($user[self::KEY_USER_TOKEN])) {
+        if (isset($user[$this->keyAccessToken]) && isset($user[$this->keyUserName])) {
             //check access token
-            $token = $user[self::KEY_USER_TOKEN];
+            $token = $user[$this->keyAccessToken];
             if ($this->cache->has($token)) {
                 $u = $this->cache->get($token);
                 if ($u) {
-                    $user = json_decode($u, true);
-                    if (isset($user[IUser::FIELD_USER_ID])) {
+                    $uobj = json_decode($u, true);
+                    $uname = $user[$this->keyUserName];
+                    if (isset($uobj[IUser::FIELD_USER_ID]) && $uname == $uobj[IUser::FIELD_USER_NAME]) {
                         $this->msg = 'User is valid!';
-                        return new NormalUser($user, $this->conn);
+                        return new NormalUser($uobj, $this->conn);
                     }
                 }
             }
-        } elseif (isset($user[IAuth::KEY_USER_NAME]) && isset($user[IAuth::KEY_USER_PASSWORD])) {
+        } elseif (isset($user[$this->keyUserName]) && isset($user[$this->keyPassword])) {
             //check name and password
             $userModel = $this->conn->getMapper('User');
-            $u = $userModel->view('*', ['AND'=>[IUser::FIELD_USER_NAME => $user[IAuth::KEY_USER_NAME], 'deleted_at'=>null]]);
+            $u = $userModel->view('*', ['AND'=>[IUser::FIELD_USER_NAME => $user[$this->keyUserName], 'deleted_at'=>null]]);
             if ($u && isset($u[0])) {
                 $u = $u[0];
                 $pwd = $u[IUser::FIELD_PASSWORD];
-                if (is_null($pwd) || password_verify($user[IAuth::KEY_USER_PASSWORD], $pwd)) {
+                if (is_null($pwd) || password_verify($user[$this->keyPassword], $pwd)) {
                     //generate access token
                     $token = substr(md5($u[IUser::FIELD_USER_ID] . mt_rand(0, 1000) . time()), 3, 10);
                     unset($u[IUser::FIELD_PASSWORD]);
-                    $u[IAuth::KEY_USER_TOKEN] = $token;
+                    $u[$this->keyAccessToken] = $token;
                     //check roles
                     if (isset($u[IUser::FIELD_ROLES])) {
                         $roles = $u[IUser::FIELD_ROLES];

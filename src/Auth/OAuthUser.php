@@ -12,7 +12,6 @@ namespace Wwtg99\PgAuth\Auth;
 class OAuthUser extends AbstractUser
 {
 
-
     /**
      * OAuthUser constructor.
      * @param array $user

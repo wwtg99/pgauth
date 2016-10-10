@@ -23,7 +23,7 @@ class UserTest extends PHPUnit_Framework_TestCase
                 "type"=>"redis",
                 "options"=>[
                     "schema"=>"tcp",
-                    "host"=>"192.168.6.131",
+                    "host"=>"192.168.0.21",
                     "database"=>6
                 ]
             ],
@@ -35,13 +35,13 @@ class UserTest extends PHPUnit_Framework_TestCase
         echo "\nMessage: " . $auth->getMessage();
         self::assertNotNull($u);
 //        var_dump($u->getUser());
-        $user2 = ['name'=>'u1', 'password'=>'1'];
+        $user2 = ['username'=>'u1', 'password'=>'1'];
         $u = $auth->signIn($user2);
         echo "\nMessage: " . $auth->getMessage();
         self::assertNotNull($u);
 //        var_dump($u->getUser());
         $token = $u->getUser()['access_token'];
-        $user3 = ['access_token'=>$token];
+        $user3 = ['access_token'=>$token, 'username'=>'u1'];
         $u = $auth->verify($user3);
         echo "\nMessage: " . $auth->getMessage();
         self::assertNotNull($u);
@@ -76,7 +76,7 @@ class UserTest extends PHPUnit_Framework_TestCase
                 "type"=>"redis",
                 "options"=>[
                     "schema"=>"tcp",
-                    "host"=>"192.168.6.131",
+                    "host"=>"192.168.0.21",
                     "database"=>6
                 ]
             ],
@@ -95,6 +95,11 @@ class UserTest extends PHPUnit_Framework_TestCase
         echo "\nMessage: " . $auth->getMessage();
         $secret = $app['app_secret'];
         $u = $auth->signIn(['code'=>$code, 'secret'=>$secret]);
+        self::assertNotNull($u);
+        echo "\nMessage: " . $auth->getMessage();
+        $token = $u->getUser()['access_token'];
+        $user2 = ['access_token'=>$token, 'username'=>'u1', 'app_id'=>$aid];
+        $u = $auth->verify($user2);
         self::assertNotNull($u);
         echo "\nMessage: " . $auth->getMessage();
     }

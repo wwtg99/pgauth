@@ -11,12 +11,21 @@ namespace Wwtg99\PgAuth\Auth;
 
 use Wwtg99\DataPool\Common\IDataConnection;
 
+/**
+ * Class OAuthServer
+ * OAuth server
+ *
+ * First, get code by username, password, app_id, redirect_uri
+ * Second, get access_token by code and app_secret
+ * Then, verify or get user info by access_token, username, app_id
+ * @package Wwtg99\PgAuth\Auth
+ */
 class OAuthServer extends NormalAuth
 {
 
-    const FIELD_APP_ID = 'app_id';
-    const FIELD_APP_REDIRECT_URI = 'redirect_uri';
-    const FIELD_APP_SECRET = 'app_secret';
+    protected $keyAppId = 'app_id';
+    protected $keyAppRedirectUri = 'redirect_uri';
+    protected $keyAppSecret = 'app_secret';
 
     /**
      * @var int
@@ -41,6 +50,61 @@ class OAuthServer extends NormalAuth
      * @param array $user
      * @return IUser|null
      */
+    public function verify(array $user)
+    {
+        if (isset($user[$this->keyAccessToken]) && isset($user[$this->keyUserName]) && isset($user[$this->keyAppId])) {
+            //check access token
+            $token = $user[$this->keyAccessToken];
+            if ($this->cache->has($token)) {
+                $u = $this->cache->get($token);
+                if ($u) {
+                    $uobj = json_decode($u, true);
+                    $uname = $user[$this->keyUserName];
+                    $appid = $user[$this->keyAppId];
+                    if (isset($uobj[IUser::FIELD_USER_ID]) && $uname == $uobj[IUser::FIELD_USER_NAME] && $appid == $uobj[$this->keyAppId]) {
+                        $this->msg = 'User is valid!';
+                        return new OAuthUser($uobj);
+                    }
+                }
+            }
+        } elseif (isset($user[$this->keyUserName]) && isset($user[$this->keyPassword])) {
+            //check name and password
+            $userModel = $this->conn->getMapper('User');
+            $u = $userModel->view('*', ['AND'=>[IUser::FIELD_USER_NAME => $user[$this->keyUserName], 'deleted_at'=>null]]);
+            if ($u && isset($u[0])) {
+                $u = $u[0];
+                $pwd = $u[IUser::FIELD_PASSWORD];
+                if (is_null($pwd) || password_verify($user[$this->keyPassword], $pwd)) {
+                    //generate access token
+                    $token = substr(md5($u[IUser::FIELD_USER_ID] . mt_rand(0, 1000) . time()), 3, 10);
+                    unset($u[IUser::FIELD_PASSWORD]);
+                    $u[$this->keyAccessToken] = $token;
+                    //check roles
+                    if (isset($u[IUser::FIELD_ROLES])) {
+                        $roles = $u[IUser::FIELD_ROLES];
+                        if (!is_array($roles)) {
+                            $roles = explode(',', $roles);
+                        }
+                        if (!in_array('common_user', $roles)) {
+                            array_push($roles, 'common_user');
+                        }
+                        $u[IUser::FIELD_ROLES] = $roles;
+                    } else {
+                        $u[IUser::FIELD_ROLES] = ['common_user'];
+                    }
+                    $this->msg = 'User is valid!';
+                    return new OAuthUser($u);
+                }
+            }
+        }
+        $this->msg = 'Verify user failed!';
+        return null;
+    }
+
+    /**
+     * @param array $user
+     * @return IUser|null
+     */
     public function signIn(array $user)
     {
         $code = isset($user['code']) ? $user['code'] : '';
@@ -50,7 +114,7 @@ class OAuthServer extends NormalAuth
             if ($u) {
                 $this->msg = 'Sign in successfully!';
                 //store token in cache
-                $token = $u[IAuth::KEY_USER_TOKEN];
+                $token = $u[$this->keyAccessToken];
                 $this->cache->set($token, json_encode($u, JSON_UNESCAPED_UNICODE), $this->tokenTtl);
                 return new OAuthUser($u);
             } else {
@@ -64,20 +128,29 @@ class OAuthServer extends NormalAuth
 
     /**
      * @param array $user
+     * @return IUser|null
+     */
+    public function signUp(array $user)
+    {
+        return null;
+    }
+
+    /**
+     * @param array $user
      * @return null|string
      */
     public function getCode(array $user)
     {
-        if (isset($user[self::KEY_USER_NAME]) && isset($user[self::KEY_USER_PASSWORD])) {
-            $appid = isset($user[self::FIELD_APP_ID]) ? $user[self::FIELD_APP_ID] : '';
-            $reduri = isset($user[self::FIELD_APP_REDIRECT_URI]) ? $user[self::FIELD_APP_REDIRECT_URI] : '';
+        if (isset($user[$this->keyUserName]) && isset($user[$this->keyPassword])) {
+            $appid = isset($user[$this->keyAppId]) ? $user[$this->keyAppId] : '';
+            $reduri = isset($user[$this->keyAppRedirectUri]) ? $user[$this->keyAppRedirectUri] : '';
             $app = $this->getAppMapper()->getApp($appid, $reduri);
             if ($app) {
                 $u = $this->verify($user);
                 if ($u) {
                     $uarr = $u->getUser();
-                    $uarr[self::FIELD_APP_ID] = $appid;
-                    $uarr[self::FIELD_APP_REDIRECT_URI] = $reduri;
+                    $uarr[$this->keyAppId] = $appid;
+                    $uarr[$this->keyAppRedirectUri] = $reduri;
                     $code = substr(md5($u->getUser()[IUser::FIELD_USER_ID] . mt_rand(0, 1000) . time()), 2, 16);
                     $this->cache->set('code_' . $code, json_encode($uarr, JSON_UNESCAPED_UNICODE), $this->codeTtl);
                     $this->msg = 'Get code successfully!';
@@ -101,13 +174,13 @@ class OAuthServer extends NormalAuth
     {
         $c = $this->cache->get('code_' . $code);
         if ($c) {
+            $this->cache->delete('code_' . $code);
             $user = json_decode($c, true);
-            $appid = $user[self::FIELD_APP_ID];
-            $reduri = $user[self::FIELD_APP_REDIRECT_URI];
+            $appid = $user[$this->keyAppId];
+            $reduri = $user[$this->keyAppRedirectUri];
             $re = $this->getAppMapper()->verifySecret($appid, $secret, $reduri);
             if ($re) {
-                unset($user[self::FIELD_APP_ID]);
-                unset($user[self::FIELD_APP_REDIRECT_URI]);
+                unset($user[$this->keyAppRedirectUri]);
                 return $user;
             }
         }

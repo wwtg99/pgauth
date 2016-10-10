@@ -34,5 +34,4 @@ abstract class AbstractUser implements IUser
         return $this->user;
     }
 
-
 }
