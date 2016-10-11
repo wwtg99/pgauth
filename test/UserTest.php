@@ -83,7 +83,7 @@ class UserTest extends PHPUnit_Framework_TestCase
             'token_ttl'=>60
         ];
         $appModel = $conn->getMapper('App');
-        $app1 = ['app_name'=>'test_app', 'redirect_uri'=>'http://localhost'];
+        $app1 = ['app_name'=>'test_app', 'redirect_uri'=>'localhost'];
         $aid = $appModel->insert($app1);
         self::assertTrue($aid != false);
         $app = $appModel->get($aid);
@@ -94,11 +94,11 @@ class UserTest extends PHPUnit_Framework_TestCase
         echo "\nCode: $code";
         echo "\nMessage: " . $auth->getMessage();
         $secret = $app['app_secret'];
-        $u = $auth->signIn(['code'=>$code, 'secret'=>$secret]);
+        $u = $auth->signIn(['code'=>$code, 'app_secret'=>$secret]);
         self::assertNotNull($u);
         echo "\nMessage: " . $auth->getMessage();
         $token = $u->getUser()['access_token'];
-        $user2 = ['access_token'=>$token, 'username'=>'u1', 'app_id'=>$aid];
+        $user2 = ['access_token'=>$token, 'app_id'=>$aid];
         $u = $auth->verify($user2);
         self::assertNotNull($u);
         echo "\nMessage: " . $auth->getMessage();

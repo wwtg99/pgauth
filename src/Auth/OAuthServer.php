@@ -17,7 +17,7 @@ use Wwtg99\DataPool\Common\IDataConnection;
  *
  * First, get code by username, password, app_id, redirect_uri
  * Second, get access_token by code and app_secret
- * Then, verify or get user info by access_token, username, app_id
+ * Then, verify or get user info by access_token, app_id
  * @package Wwtg99\PgAuth\Auth
  */
 class OAuthServer extends NormalAuth
@@ -65,16 +65,15 @@ class OAuthServer extends NormalAuth
      */
     public function verify(array $user)
     {
-        if (isset($user[$this->keyAccessToken]) && isset($user[$this->keyUserName]) && isset($user[$this->keyAppId])) {
+        if (isset($user[$this->keyAccessToken]) && isset($user[$this->keyAppId])) {
             //check access token
             $token = $user[$this->keyAccessToken];
             if ($this->cache->has($token)) {
                 $u = $this->cache->get($token);
                 if ($u) {
                     $uobj = json_decode($u, true);
-                    $uname = $user[$this->keyUserName];
                     $appid = $user[$this->keyAppId];
-                    if (isset($uobj[IUser::FIELD_USER_ID]) && $uname == $uobj[IUser::FIELD_USER_NAME] && $appid == $uobj[$this->keyAppId]) {
+                    if (isset($uobj[IUser::FIELD_USER_ID]) && $appid == $uobj[$this->keyAppId]) {
                         $this->msg = 'User is valid!';
                         return new OAuthUser($uobj);
                     }
