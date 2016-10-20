@@ -103,11 +103,15 @@ class NormalUser extends AbstractUser
         return $this->conn->getMapper('User');
     }
 
+    /**
+     * Refresh user
+     */
     protected function refreshUser()
     {
         $u = $this->getUserMapper()->get($this->user[IUser::FIELD_USER_ID]);
         if ($u) {
-            $this->user = $u;
+            unset($u[self::FIELD_PASSWORD]);
+            $this->user = array_merge($this->user, $u);
         }
     }
 

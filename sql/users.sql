@@ -283,7 +283,7 @@ CREATE OR REPLACE VIEW public.view_user_role AS
 CREATE OR REPLACE VIEW public.view_users AS
   SELECT users.user_id, users.name, users.label, password, email,
     users.descr, departments.department_id, departments.name AS department,
-    departments.descr AS department_descr, superuser, roles,
+    departments.descr AS department_descr, superuser, roles, users.params,
     users.created_at, users.updated_at, users.deleted_at
   FROM public.users LEFT JOIN public.departments ON users.department_id = departments.department_id
     LEFT JOIN public.view_user_role ON users.user_id = view_user_role.user_id;

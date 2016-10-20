@@ -67,6 +67,9 @@ BEGIN
       RETURN NEW;
     WHEN 'UPDATE' THEN
       NEW.app_id := OLD.app_id;
+      IF NEW.app_secret != OLD.app_secret THEN
+        NEW.app_secret := generate_app_secret(NEW.app_name, NEW.redirect_uri);
+      END IF;
       NEW.created_at := OLD.created_at;
       NEW.updated_at := now();
       RETURN NEW;

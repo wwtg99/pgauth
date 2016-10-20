@@ -1,3 +1,7 @@
+## 0.1.5
+- Fix NormalUser bugs
+- Update sql
+
 ## 0.1.4
 - Remove roles add common_user
 - Update pgauth-cli
