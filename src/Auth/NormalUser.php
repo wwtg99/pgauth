@@ -20,15 +20,22 @@ class NormalUser extends AbstractUser
     protected $conn;
 
     /**
+     * @var NormalAuth
+     */
+    protected $auth;
+
+    /**
      * NormalUser constructor.
      *
      * @param array $user
      * @param IDataConnection $conn
+     * @param NormalAuth $auth
      */
-    public function __construct(array $user, $conn)
+    public function __construct(array $user, $conn, $auth)
     {
         parent::__construct($user);
         $this->conn = $conn;
+        $this->auth = $auth;
     }
 
     /**
@@ -112,6 +119,9 @@ class NormalUser extends AbstractUser
         if ($u) {
             unset($u[self::FIELD_PASSWORD]);
             $this->user = array_merge($this->user, $u);
+            //update token in cache
+            $token = $this->user[$this->auth->keyAccessToken];
+            $this->auth->getCache()->set($token, json_encode($this->user, JSON_UNESCAPED_UNICODE), $this->auth->tokenTtl);
         }
     }
 

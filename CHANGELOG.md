@@ -1,3 +1,6 @@
+## 0.1.6
+- Fix refresh user after update info
+
 ## 0.1.5
 - Fix NormalUser bugs
 - Update sql

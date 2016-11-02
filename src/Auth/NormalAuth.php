@@ -34,7 +34,7 @@ class NormalAuth extends AbstractAuth
     /**
      * @var int
      */
-    protected $tokenTtl = 3600;
+    public $tokenTtl = 3600;
 
     /**
      * @var string
@@ -111,7 +111,7 @@ class NormalAuth extends AbstractAuth
             }
             $u = $userModel->view('*', [IUser::FIELD_USER_ID => $uid]);
             $this->msg = 'Sign up successfully!';
-            return new NormalUser($u, $this->conn);
+            return new NormalUser($u, $this->conn, $this);
         } else {
             $this->msg = 'Sign up failed!';
             return null;
@@ -164,7 +164,7 @@ class NormalAuth extends AbstractAuth
                     $uname = $user[$this->keyUserName];
                     if (isset($uobj[IUser::FIELD_USER_ID]) && $uname == $uobj[IUser::FIELD_USER_NAME]) {
                         $this->msg = 'User is valid!';
-                        return new NormalUser($uobj, $this->conn);
+                        return new NormalUser($uobj, $this->conn, $this);
                     }
                 }
             }
@@ -181,12 +181,21 @@ class NormalAuth extends AbstractAuth
                     unset($u[IUser::FIELD_PASSWORD]);
                     $u[$this->keyAccessToken] = $token;
                     $this->msg = 'User is valid!';
-                    return new NormalUser($u, $this->conn);
+                    return new NormalUser($u, $this->conn, $this);
                 }
             }
         }
         $this->msg = 'Verify user failed!';
         return null;
     }
+
+    /**
+     * @return \Desarrolla2\Cache\Cache
+     */
+    public function getCache()
+    {
+        return $this->cache;
+    }
+
 
 }
