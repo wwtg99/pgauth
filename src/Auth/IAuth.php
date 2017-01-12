@@ -41,6 +41,11 @@ interface IAuth
     public function verify(array $user);
 
     /**
+     * @return IUser
+     */
+    public function getUser();
+
+    /**
      * @return string
      */
     public function getMessage();

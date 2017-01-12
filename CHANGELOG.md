@@ -1,3 +1,6 @@
+## 0.1.8
+- Add getUser() in IAuth
+
 ## 0.1.7
 - Simplify auth and user
 - Update db structure
