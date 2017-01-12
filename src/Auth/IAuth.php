@@ -12,6 +12,10 @@ namespace Wwtg99\PgAuth\Auth;
 interface IAuth
 {
 
+    const KEY_USERNAME = 'username';
+    const KEY_PASSWORD = 'password';
+    const KEY_TOKEN = 'access_token';
+
     /**
      * @param array $user
      * @return IUser|null
@@ -32,7 +36,7 @@ interface IAuth
 
     /**
      * @param array $user
-     * @return IUser|null
+     * @return bool
      */
     public function verify(array $user);
 

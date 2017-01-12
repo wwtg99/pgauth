@@ -12,14 +12,15 @@ namespace Wwtg99\PgAuth\Auth;
 abstract class AbstractAuth implements IAuth
 {
 
-    public $keyUserName = 'username';
-    public $keyPassword = 'password';
-    public $keyAccessToken = 'access_token';
-
     /**
      * @var string
      */
     protected $msg = '';
+
+    /**
+     * @var IUser
+     */
+    protected $user = null;
 
     /**
      * @return string
@@ -28,6 +29,5 @@ abstract class AbstractAuth implements IAuth
     {
         return $this->msg;
     }
-
 
 }

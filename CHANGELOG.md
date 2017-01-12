@@ -1,3 +1,7 @@
+## 0.1.7
+- Simplify auth and user
+- Update db structure
+
 ## 0.1.6
 - Fix refresh user after update info
 

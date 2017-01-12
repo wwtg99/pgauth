@@ -37,9 +37,10 @@ class NormalAuth extends AbstractAuth
     public $tokenTtl = 3600;
 
     /**
-     * @var string
+     * Check access_token without name.
+     * @var bool
      */
-    protected $msg = '';
+    public $tokenOnly = false;
 
     /**
      * NormalAuth constructor.
@@ -57,14 +58,8 @@ class NormalAuth extends AbstractAuth
         if (isset($config['token_ttl'])) {
             $this->tokenTtl = $config['token_ttl'];
         }
-        if (isset($config['key_user_name'])) {
-            $this->keyUserName = $config['key_user_name'];
-        }
-        if (isset($config['key_password'])) {
-            $this->keyPassword = $config['key_password'];
-        }
-        if (isset($config['key_access_token'])) {
-            $this->keyAccessToken = $config['key_access_token'];
+        if (isset($config['token_only'])) {
+            $this->tokenOnly = boolval($config['token_only']);
         }
         $this->conn = $conn;
     }
@@ -109,13 +104,14 @@ class NormalAuth extends AbstractAuth
                     $this->msg = 'Change roles failed!';
                 }
             }
-            $u = $userModel->view('*', [IUser::FIELD_USER_ID => $uid]);
+            $token = $this->generateToken($uid);
+            $this->user = new NormalUser($uid, $userModel, $token);
             $this->msg = 'Sign up successfully!';
-            return new NormalUser($u, $this->conn, $this);
-        } else {
-            $this->msg = 'Sign up failed!';
-            return null;
+            $this->saveCache();
+            return $this->user;
         }
+        $this->msg = 'Sign up failed!';
+        return null;
     }
 
     /**
@@ -124,14 +120,11 @@ class NormalAuth extends AbstractAuth
      */
     public function signIn(array $user)
     {
-        $u = $this->verify($user);
-        if ($u) {
+        if ($this->verify($user)) {
             $this->msg = 'Sign in successfully!';
-            //store token in cache
-            $token = $u->getUser()[$this->keyAccessToken];
-            $this->cache->set($token, json_encode($u->getUser(), JSON_UNESCAPED_UNICODE), $this->tokenTtl);
+            $this->saveCache();
         }
-        return $u;
+        return $this->user;
     }
 
     /**
@@ -140,7 +133,7 @@ class NormalAuth extends AbstractAuth
      */
     public function signOut(array $user)
     {
-        $token = isset($user[$this->keyAccessToken]) ? $user[$this->keyAccessToken] : null;
+        $token = isset($user[self::KEY_TOKEN]) ? $user[self::KEY_TOKEN] : null;
         if ($token) {
             $this->cache->delete($token);
         }
@@ -150,43 +143,24 @@ class NormalAuth extends AbstractAuth
 
     /**
      * @param array $user
-     * @return IUser|null
+     * @return bool
      */
     public function verify(array $user)
     {
-        if (isset($user[$this->keyAccessToken]) && isset($user[$this->keyUserName])) {
-            //check access token
-            $token = $user[$this->keyAccessToken];
-            if ($this->cache->has($token)) {
-                $u = $this->cache->get($token);
-                if ($u) {
-                    $uobj = json_decode($u, true);
-                    $uname = $user[$this->keyUserName];
-                    if (isset($uobj[IUser::FIELD_USER_ID]) && $uname == $uobj[IUser::FIELD_USER_NAME]) {
-                        $this->msg = 'User is valid!';
-                        return new NormalUser($uobj, $this->conn, $this);
-                    }
-                }
-            }
-        } elseif (isset($user[$this->keyUserName]) && isset($user[$this->keyPassword])) {
+        if ($this->tokenOnly && isset($user[self::KEY_TOKEN])) {
+            //check access token only
+            $re = $this->checkTokenOnly($user);
+        } else if (isset($user[self::KEY_TOKEN]) && isset($user[self::KEY_USERNAME])) {
+            //check access token and name
+            $re = $this->checkTokenName($user);
+        } elseif (isset($user[self::KEY_USERNAME]) && isset($user[self::KEY_PASSWORD])) {
             //check name and password
-            $userModel = $this->conn->getMapper('User');
-            $u = $userModel->view('*', ['AND'=>[IUser::FIELD_USER_NAME => $user[$this->keyUserName], 'deleted_at'=>null]]);
-            if ($u && isset($u[0])) {
-                $u = $u[0];
-                $pwd = $u[IUser::FIELD_PASSWORD];
-                if (is_null($pwd) || password_verify($user[$this->keyPassword], $pwd)) {
-                    //generate access token
-                    $token = substr(md5($u[IUser::FIELD_USER_ID] . mt_rand(0, 1000) . time()), 3, 10);
-                    unset($u[IUser::FIELD_PASSWORD]);
-                    $u[$this->keyAccessToken] = $token;
-                    $this->msg = 'User is valid!';
-                    return new NormalUser($u, $this->conn, $this);
-                }
-            }
+            $re = $this->checkNamePassword($user);
+        } else {
+            $this->msg = 'Verify user failed!';
+            $re = false;
         }
-        $this->msg = 'Verify user failed!';
-        return null;
+        return $re;
     }
 
     /**
@@ -197,5 +171,98 @@ class NormalAuth extends AbstractAuth
         return $this->cache;
     }
 
+    /**
+     * Save token in cache
+     */
+    public function saveCache()
+    {
+        if ($this->user) {
+            $token = $this->user->getUser()[IUser::FIELD_TOKEN];
+            //store token in cache
+            $this->cache->set($token, json_encode($this->user->getUser(), JSON_UNESCAPED_UNICODE), $this->tokenTtl);
+        }
+    }
+
+    /**
+     * @param $user
+     * @return bool
+     */
+    protected function checkTokenOnly($user)
+    {
+        $token = $user[self::KEY_TOKEN];
+        if ($this->cache->has($token)) {
+            $u = $this->cache->get($token);
+            if ($u) {
+                $uobj = json_decode($u, true);
+                if (isset($uobj[IUser::FIELD_USER_ID])) {
+                    $uid = $uobj[IUser::FIELD_USER_ID];
+                    $userModel = $this->conn->getMapper('User');
+                    $token = $this->generateToken($uid);
+                    $this->user = new NormalUser($uid, $userModel, $token);
+                    $this->msg = 'User is valid!';
+                    return true;
+                }
+            }
+        }
+        $this->msg = 'Verify user failed!';
+        return false;
+    }
+
+    /**
+     * @param $user
+     * @return bool
+     */
+    protected function checkTokenName($user)
+    {
+        $token = $user[self::KEY_TOKEN];
+        if ($this->cache->has($token)) {
+            $u = $this->cache->get($token);
+            if ($u) {
+                $uobj = json_decode($u, true);
+                $uname = $user[self::KEY_USERNAME];
+                if (isset($uobj[IUser::FIELD_USER_ID]) && $uname == $uobj[IUser::FIELD_USER_NAME]) {
+                    $uid = $uobj[IUser::FIELD_USER_ID];
+                    $userModel = $this->conn->getMapper('User');
+                    $token = $this->generateToken($uid);
+                    $this->user = new NormalUser($uid, $userModel, $token);
+                    $this->msg = 'User is valid!';
+                    return true;
+                }
+            }
+        }
+        $this->msg = 'Verify user failed!';
+        return false;
+    }
+
+    /**
+     * @param $user
+     * @return bool
+     */
+    protected function checkNamePassword($user)
+    {
+        $userModel = $this->conn->getMapper('User');
+        $u = $userModel->get(null, '*', ['AND'=>[IUser::FIELD_USER_NAME => $user[self::KEY_USERNAME], 'deleted_at'=>null]]);
+        if ($u) {
+            $pwd = $u[IUser::FIELD_PASSWORD];
+            if (is_null($pwd) || password_verify($user[self::KEY_PASSWORD], $pwd)) {
+                $uid = $u[IUser::FIELD_USER_ID];
+                $token = $this->generateToken($uid);
+                $this->user = new NormalUser($uid, $userModel, $token);
+                $this->msg = 'User is valid!';
+                return true;
+            }
+        }
+        $this->msg = 'Verify user failed!';
+        return false;
+    }
+
+    /**
+     * @param $uid
+     * @return string
+     */
+    protected function generateToken($uid)
+    {
+        return substr(md5($uid . mt_rand(0, 1000) . time()), 3, 10);
+    }
 
 }

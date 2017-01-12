@@ -82,7 +82,7 @@ class AuthTest extends PHPUnit_Framework_TestCase
         self::assertTrue($uid2 != false);
         $re = $user->delete($uid2);
         $re = $user->get($uid2);
-        self::assertNotEmpty($re['deleted_at']);
+        self::assertEmpty($re);
         //role
         $re = $user->addRole($uid, 1);
         self::assertTrue($re != false);
@@ -109,7 +109,7 @@ class AuthTest extends PHPUnit_Framework_TestCase
     public function testUserLog()
     {
         $user = $this->pool->getConnection('main')->getMapper('UserLog');
-        $data1 = ['user_id'=>'U000001', 'log_event'=>'create', 'descr'=>'aaa', 'params'=>'{"a":"b"}', 'created_by'=>'U000001'];
+        $data1 = ['user_id'=>'U0000000001', 'log_event'=>'create', 'descr'=>'aaa', 'params'=>'{"a":"b"}', 'created_by'=>'U0000000001'];
         $id = $user->insert($data1);
         self::assertTrue($id != false);
         $re = $user->select();

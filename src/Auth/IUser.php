@@ -18,6 +18,7 @@ interface IUser
     const FIELD_ROLES = 'roles';
     const FIELD_LABEL = 'label';
     const FIELD_EMAIL = 'email';
+    const FIELD_TOKEN = 'access_token';
 
     /**
      * @param array $user
@@ -35,6 +36,11 @@ interface IUser
      * @return array
      */
     public function getUser();
+
+    /**
+     * @return string
+     */
+    public function getId();
 
     /**
      * @return bool

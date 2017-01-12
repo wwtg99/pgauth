@@ -3,14 +3,61 @@
 Auth library depends on Postgresql.
 
 Support:
+- Normal auth and OAuth
 - User management
 - Role management
 - Department management
 - App management
 
 ### Usage
-- Initialize database
+#### Initialize database
 `Run \i install.sql in psql`
+
+#### Auth
+- Normal Auth
+```
+$auth = new \Wwtg99\PgAuth\Auth\NormalAuth($conn, $config);
+//sign up
+$user1 = ['name'=>'u1', 'password'=>'1', 'label'=>'user 1', 'email'=>'u1@a.com'];
+$u = $auth->signUp($user1);
+var_dump($u->getUser());
+//sign in
+$user2 = ['username'=>'u1', 'password'=>'1'];
+$u = $auth->signIn($user2);
+var_dump($u->getUser());
+//verify but not sign in
+$re = $auth->verify($user2);
+var_dump($re);
+//sign out
+$auth->signOut($u->getUser());
+
+//change user info by user object
+$user3 = ['label'=>'user 111', 'descr'=>'aaaa'];
+$re = $u->changeInfo($user3);
+//inactive user
+$re = $u->inactive();
+//active user
+$re = $u->active();
+```
+
+- OAuth
+```
+$auth = new \Wwtg99\PgAuth\Auth\OAuthServer($conn, $config);
+//step 1 get code
+$app_id = 'asmfi2fnn'; //app id
+$url = 'http://localhost'; //redirect url
+$user1 = ['username'=>'u1', 'password'=>'2'];
+$code = $auth->getCode($app_id, $url, $user1);
+//step 2 get access_token
+$secret = 'asdfasfawefas'; //app secret
+$u = $auth->signIn(['code'=>$code, 'app_secret'=>$secret]);
+$token = $u->getUser()[\Wwtg99\PgAuth\Auth\IUser::FIELD_TOKEN];
+//verify token
+$user2 = ['access_token'=>$token];
+$re = $auth->verify($user2);
+var_dump($re);
+```
+
 - Manage department (One user belongs to one department or not)
 ```
 // create department
@@ -90,7 +137,7 @@ $re = $app->verifySecret($aid, $secret, 'http://localhost/aa');
 $re = $app->delete($aid);
 ```
 
-### Client
+### Client `deprecated in 0.1.7`
 The pgauth-cli is used for user management (signup, signin, signout) and user verify.
 
 #### Usage

@@ -89,10 +89,10 @@ class User extends ArrayPgInsertMapper
      */
     public function view($select = '*', $where = [])
     {
-        $re = $this->connection->getEngine()->select($this->viewName, $select, $where);
-        if (!$re) {
-            $re = [];
-        }
+        $tmp = $this->name;
+        $this->name = $this->viewName;
+        $re = $this->select($select, $where);
+        $this->name = $tmp;
         return $re;
     }
 }

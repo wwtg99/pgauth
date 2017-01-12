@@ -26,11 +26,12 @@ CREATE TABLE public.roles (
 CREATE SEQUENCE public.user_id_seq;
 
 CREATE TABLE public.users (
-  user_id TEXT PRIMARY KEY DEFAULT 'U' || lpad(nextval('user_id_seq')::TEXT, 6, '0'),
+  user_id TEXT PRIMARY KEY DEFAULT 'U' || lpad(nextval('user_id_seq')::TEXT, 10, '0'),
   name TEXT NOT NULL UNIQUE,
   password TEXT,
   label TEXT,
   email TEXT,
+  tel TEXT,
   descr TEXT,
   department_id TEXT REFERENCES public.departments (department_id) ON UPDATE CASCADE,
   superuser BOOLEAN NOT NULL DEFAULT FALSE,
@@ -196,7 +197,7 @@ $BODY$ LANGUAGE plpgsql;
 --triggers--
 ------------
 
-CREATE OR REPLACE FUNCTION public.tp_change_department() RETURNS TRIGGER AS $BODY$
+CREATE OR REPLACE FUNCTION public.tp_change_at() RETURNS TRIGGER AS $BODY$
 DECLARE
 BEGIN
   CASE TG_OP
@@ -216,29 +217,10 @@ $BODY$ LANGUAGE plpgsql
 SECURITY DEFINER;
 
 CREATE TRIGGER tg_department BEFORE INSERT OR UPDATE ON public.departments
-FOR EACH ROW EXECUTE PROCEDURE public.tp_change_department();
-
-CREATE OR REPLACE FUNCTION public.tp_change_role() RETURNS TRIGGER AS $BODY$
-DECLARE
-BEGIN
-  CASE TG_OP
-    WHEN 'INSERT' THEN
-      NEW.created_at := now();
-      NEW.updated_at := now();
-      RETURN NEW;
-    WHEN 'UPDATE' THEN
-      NEW.created_at := OLD.created_at;
-      NEW.updated_at := now();
-      RETURN NEW;
-    ELSE
-      RETURN NULL;
-  END CASE;
-END;
-$BODY$ LANGUAGE plpgsql
-SECURITY DEFINER;
+FOR EACH ROW EXECUTE PROCEDURE public.tp_change_at();
 
 CREATE TRIGGER tg_role BEFORE INSERT OR UPDATE ON public.roles
-FOR EACH ROW EXECUTE PROCEDURE public.tp_change_role();
+FOR EACH ROW EXECUTE PROCEDURE public.tp_change_at();
 
 CREATE OR REPLACE FUNCTION public.tp_change_user() RETURNS TRIGGER AS $BODY$
 DECLARE
@@ -249,7 +231,7 @@ BEGIN
     WHEN 'INSERT' THEN
       IF NEW.user_id IS NULL THEN
         _s := nextval('user_id_seq');
-        _id := 'U' || lpad(_s::TEXT, 6, '0');
+        _id := 'U' || lpad(_s::TEXT, 10, '0');
         NEW.user_id = _id;
       END IF;
       NEW.created_at := now();
@@ -260,15 +242,14 @@ BEGIN
       NEW.created_at := OLD.created_at;
       NEW.updated_at := now();
       RETURN NEW;
-    WHEN 'DELETE' THEN
-      UPDATE public.users SET deleted_at = now() WHERE user_id = OLD.user_id;
+    ELSE
       RETURN NULL;
   END CASE;
 END;
 $BODY$ LANGUAGE plpgsql
 SECURITY DEFINER;
 
-CREATE TRIGGER tg_user BEFORE INSERT OR UPDATE OR DELETE ON public.users
+CREATE TRIGGER tg_user BEFORE INSERT OR UPDATE ON public.users
 FOR EACH ROW EXECUTE PROCEDURE public.tp_change_user();
 
 ---------
@@ -281,7 +262,7 @@ CREATE OR REPLACE VIEW public.view_user_role AS
   GROUP BY user_id;
 
 CREATE OR REPLACE VIEW public.view_users AS
-  SELECT users.user_id, users.name, users.label, password, email,
+  SELECT users.user_id, users.name, users.label, email, tel,
     users.descr, departments.department_id, departments.name AS department,
     departments.descr AS department_descr, superuser, roles, users.params,
     users.created_at, users.updated_at, users.deleted_at
