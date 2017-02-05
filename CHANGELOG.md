@@ -1,3 +1,6 @@
+## 0.1.10
+- Fix auth_method bugs
+
 ## 0.1.9
 - Add auth_method
 - Support login by user_id

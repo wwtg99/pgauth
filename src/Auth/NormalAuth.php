@@ -155,16 +155,16 @@ class NormalAuth extends AbstractAuth
      */
     public function verify(array $user)
     {
-        if (($this->authMethod & 4 == 4) && isset($user[self::KEY_TOKEN])) {
+        if (($this->authMethod & 4) == 4 && isset($user[self::KEY_TOKEN])) {
             //check access token only
             $re = $this->checkTokenOnly($user);
-        } else if (($this->authMethod & 2 == 2) && isset($user[self::KEY_TOKEN]) && isset($user[self::KEY_USERNAME])) {
+        } else if (($this->authMethod & 2) == 2 && isset($user[self::KEY_TOKEN]) && isset($user[self::KEY_USERNAME])) {
             //check access token and name
             $re = $this->checkTokenName($user);
-        } elseif (($this->authMethod & 1 == 1) && isset($user[self::KEY_USERNAME]) && isset($user[self::KEY_PASSWORD])) {
+        } elseif (($this->authMethod & 1) == 1 && isset($user[self::KEY_USERNAME]) && isset($user[self::KEY_PASSWORD])) {
             //check name and password
             $re = $this->checkNamePassword($user);
-        } elseif (($this->authMethod & 8 == 8) && isset($user[self::KEY_USER_ID])) {
+        } elseif (($this->authMethod & 8) == 8 && isset($user[self::KEY_USER_ID])) {
             //check user_id
             $re = $this->checkUserId($user);
         } else {
