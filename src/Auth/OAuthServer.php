@@ -31,8 +31,6 @@ class OAuthServer extends NormalAuth
 
     public $codePrefix = 'oauth_code_';
 
-    public $tokenOnly = true;
-
     /**
      * @var int
      */
@@ -142,7 +140,9 @@ class OAuthServer extends NormalAuth
         if ($code && $secret) {
             if ($this->verifyCode($code, $secret)) {
                 $this->msg = 'Sign in successfully!';
-                $this->saveCache();
+                if ($this->tokenTtl) {
+                    $this->saveCache();
+                }
             }
         } else {
             return parent::signIn($user);

@@ -2,12 +2,23 @@
 
 Auth library depends on Postgresql.
 
-Support:
+### Support:
 - Normal auth and OAuth
 - User management
 - Role management
 - Department management
 - App management
+
+### Auth Method
+config auth_method
+- Login by name and password: 1
+- Login by name and access_token: 2
+- Login by access_token only: 4
+- Login with user_id only: 8
+
+And login TTL, config token_ttl
+- Login once (config token_ttl with 0, no cache)
+- Login for some time (config token_ttl with > 0, use cache)
 
 ### Usage
 #### Initialize database
@@ -135,21 +146,4 @@ $secret = 'XXXXX';
 $re = $app->verifySecret($aid, $secret, 'http://localhost/aa');
 // delete app
 $re = $app->delete($aid);
-```
-
-### Client `deprecated in 0.1.7`
-The pgauth-cli is used for user management (signup, signin, signout) and user verify.
-
-#### Usage
-```
-//sign up
-php pgauth-cli -a signup --user-name u1 --user-password 1 --user-email a@a.com
-//sign in
-php pgauth-cli -a signin --user-name u1 --user-password 1
-//output
-//{"user_id":"U000001","name":"u1","label":null,"email":"a@a.com","descr":null,"department_id":null,"department":null,"department_descr":null,"superuser":false,"roles":["common_user"],"created_at":"2016-10-06 04:52:39.098799+08","updated_at":"2016-10-06 04:52:39.098799+08","deleted_at":null,"access_token":"ff763e1c98"}
-//verify
-php pgauth-cli -a verify --user-token ff763e1c98
-//sign out
-php pgauth-cli -a signout --user-token ff763e1c98
 ```

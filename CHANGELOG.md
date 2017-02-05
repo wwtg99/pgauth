@@ -1,3 +1,8 @@
+## 0.1.9
+- Add auth_method
+- Support login by user_id
+- Remove client
+
 ## 0.1.8
 - Add getUser() in IAuth
 

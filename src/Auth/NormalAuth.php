@@ -32,15 +32,19 @@ class NormalAuth extends AbstractAuth
     protected $conn = null;
 
     /**
+     * Verify method
+     * 1: name and password
+     * 2: name and access_token
+     * 4: access_token only
+     * 8: user_id only
+     * @var int
+     */
+    protected $authMethod = 1;
+
+    /**
      * @var int
      */
     public $tokenTtl = 3600;
-
-    /**
-     * Check access_token without name.
-     * @var bool
-     */
-    public $tokenOnly = false;
 
     /**
      * NormalAuth constructor.
@@ -58,8 +62,8 @@ class NormalAuth extends AbstractAuth
         if (isset($config['token_ttl'])) {
             $this->tokenTtl = $config['token_ttl'];
         }
-        if (isset($config['token_only'])) {
-            $this->tokenOnly = boolval($config['token_only']);
+        if (isset($config['auth_method'])) {
+            $this->authMethod = $config['auth_method'];
         }
         $this->conn = $conn;
     }
@@ -107,7 +111,9 @@ class NormalAuth extends AbstractAuth
             $token = $this->generateToken($uid);
             $this->user = new NormalUser($uid, $userModel, $token);
             $this->msg = 'Sign up successfully!';
-            $this->saveCache();
+            if ($this->tokenTtl > 0) {
+                $this->saveCache();
+            }
             return $this->user;
         }
         $this->msg = 'Sign up failed!';
@@ -122,7 +128,9 @@ class NormalAuth extends AbstractAuth
     {
         if ($this->verify($user)) {
             $this->msg = 'Sign in successfully!';
-            $this->saveCache();
+            if ($this->tokenTtl > 0) {
+                $this->saveCache();
+            }
         }
         return $this->user;
     }
@@ -147,15 +155,18 @@ class NormalAuth extends AbstractAuth
      */
     public function verify(array $user)
     {
-        if ($this->tokenOnly && isset($user[self::KEY_TOKEN])) {
+        if (($this->authMethod & 4 == 4) && isset($user[self::KEY_TOKEN])) {
             //check access token only
             $re = $this->checkTokenOnly($user);
-        } else if (isset($user[self::KEY_TOKEN]) && isset($user[self::KEY_USERNAME])) {
+        } else if (($this->authMethod & 2 == 2) && isset($user[self::KEY_TOKEN]) && isset($user[self::KEY_USERNAME])) {
             //check access token and name
             $re = $this->checkTokenName($user);
-        } elseif (isset($user[self::KEY_USERNAME]) && isset($user[self::KEY_PASSWORD])) {
+        } elseif (($this->authMethod & 1 == 1) && isset($user[self::KEY_USERNAME]) && isset($user[self::KEY_PASSWORD])) {
             //check name and password
             $re = $this->checkNamePassword($user);
+        } elseif (($this->authMethod & 8 == 8) && isset($user[self::KEY_USER_ID])) {
+            //check user_id
+            $re = $this->checkUserId($user);
         } else {
             $this->msg = 'Verify user failed!';
             $re = false;
@@ -251,6 +262,26 @@ class NormalAuth extends AbstractAuth
                 $this->msg = 'User is valid!';
                 return true;
             }
+        }
+        $this->msg = 'Verify user failed!';
+        return false;
+    }
+
+    /**
+     * @param $user
+     * @return bool
+     */
+    protected function checkUserId($user)
+    {
+        $userModel = $this->conn->getMapper('User');
+        $uid = $user[self::KEY_USER_ID];
+        $u = $userModel->get(null, '*', ['AND'=>[IUser::FIELD_USER_ID => $uid, 'deleted_at'=>null]]);
+        if ($u) {
+            $token = $this->generateToken($uid);
+            $this->user = new NormalUser($uid, $userModel, $token);
+            $this->msg = 'User is valid!';
+            return true;
+
         }
         $this->msg = 'Verify user failed!';
         return false;

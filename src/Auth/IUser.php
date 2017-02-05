@@ -18,6 +18,9 @@ interface IUser
     const FIELD_ROLES = 'roles';
     const FIELD_LABEL = 'label';
     const FIELD_EMAIL = 'email';
+    const FIELD_SUPERUSER = 'superuser';
+    const FIELD_DEPARTMENT_ID = 'department_id';
+    const FIELD_DEPARTMENT = 'department';
     const FIELD_TOKEN = 'access_token';
 
     /**
