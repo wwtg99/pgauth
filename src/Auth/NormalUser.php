@@ -9,8 +9,106 @@
 namespace Wwtg99\PgAuth\Auth;
 
 
-class NormalUser extends AbstractUser
+use Wwtg99\PgAuth\Mapper\User;
+
+class NormalUser implements IUser
 {
+
+    /**
+     * @var string
+     */
+    protected $userId = '';
+
+    /**
+     * @var string
+     */
+    protected $token = '';
+
+    /**
+     * @var array
+     */
+    protected $user = [];
+
+    /**
+     * @var User
+     */
+    protected $mapper = null;
+
+    /**
+     * AbstractUser constructor.
+     * @param $user_id
+     * @param $user
+     * @param $token
+     */
+    public function __construct($user_id, $user, $token = '')
+    {
+        $this->userId = $user_id;
+        $this->token = $token;
+        if ($user instanceof User) {
+            $this->mapper = $user;
+            $this->refreshUser();
+        } elseif (is_array($user)) {
+            $this->user = $user;
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getUserArray()
+    {
+        $u = $this->user;
+        if ($this->token) {
+            $u[self::FIELD_TOKEN] = $this->token;
+        }
+        return $u;
+    }
+
+    /**
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->userId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getToken()
+    {
+        return $this->token;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRoles()
+    {
+        $r = isset($this->user[self::FIELD_ROLES]) ? $this->user[self::FIELD_ROLES] : [];
+        if (!is_array($r)) {
+            $r = explode(',', $r);
+        }
+        return $r;
+    }
+
+    /**
+     * @return User
+     */
+    public function getMapper()
+    {
+        return $this->mapper;
+    }
+
+    /**
+     * @param User $mapper
+     * @return NormalUser
+     */
+    public function setMapper($mapper)
+    {
+        $this->mapper = $mapper;
+        return $this;
+    }
 
     /**
      * @param array $user
@@ -34,13 +132,29 @@ class NormalUser extends AbstractUser
                 }
                 unset($user[self::FIELD_ROLES]);
             }
-            $re = $this->mapper->update($user, null, $this->userId);
+            if ($user) {
+                $re = $this->mapper->update($user, null, $this->userId);
+            } else {
+                $re = true;
+            }
             $this->refreshUser();
         } else {
             $this->user = $user;
             $re = true;
         }
         return boolval($re);
+    }
+
+    /**
+     * @param $roles
+     * @return bool
+     */
+    public function changeRoles($roles)
+    {
+        if ($roles) {
+            return $this->changeInfo([self::FIELD_ROLES=>$roles]);
+        }
+        return false;
     }
 
     /**
@@ -83,4 +197,19 @@ class NormalUser extends AbstractUser
         return $re;
     }
 
+    /**
+     * Refresh user
+     * @return array|null
+     */
+    protected function refreshUser()
+    {
+        if ($this->mapper) {
+            $u = $this->mapper->view('*', [IUser::FIELD_USER_ID=>$this->userId]);
+            if ($u && isset($u[0])) {
+                $this->user = $u[0];
+            }
+            return $u[0];
+        }
+        return null;
+    }
 }

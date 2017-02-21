@@ -1,3 +1,8 @@
+## 0.2.0
+- Change OAuth to utils
+- Add more verify methods
+- Update class structures
+
 ## 0.1.10
 - Fix auth_method bugs
 

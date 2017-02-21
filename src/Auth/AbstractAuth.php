@@ -31,6 +31,16 @@ abstract class AbstractAuth implements IAuth
     }
 
     /**
+     * @param IUser $user
+     * @return AbstractAuth
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getMessage()

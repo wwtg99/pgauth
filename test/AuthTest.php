@@ -134,30 +134,6 @@ class AuthTest extends PHPUnit_Framework_TestCase
         $data2 = ['app_name'=>'app2', 'descr'=>'rrr'];
         $aid2 = $app->insert($data2);
         self::assertTrue($aid2 != false);
-        //get app
-        $re = $app->getApp($aid, 'http://localhost/path');
-        self::assertTrue($re != false);
-        self::assertEquals('app1', $re['app_name']);
-        $re = $app->getApp($aid, 'aa');
-        self::assertEquals([], $re);
-        $re = $app->getApp($aid2, 'aa');
-        self::assertTrue($re != false);
-        self::assertEquals('app2', $re['app_name']);
-        //verify
-        $sec1 = $app->get($aid, 'app_secret');
-        $re = $app->verifySecret($aid, $sec1, 'http://localhost/aa');
-        self::assertTrue($re);
-        $re = $app->verifySecret($aid, $sec1, 'aa');
-        self::assertFalse($re);
-        $re = $app->verifySecret($aid, 'aa', 'http://localhost/aa');
-        self::assertFalse($re);
-        $sec2 = $app->get($aid2, 'app_secret');
-        $re = $app->verifySecret($aid2, $sec2, 'http://localhost/aa');
-        self::assertTrue($re);
-        $re = $app->verifySecret($aid2, $sec2, 'aa');
-        self::assertTrue($re);
-        $re = $app->verifySecret($aid2, 'aa', 'http://localhost/aa');
-        self::assertFalse($re);
         //delete
         $re = $app->delete($aid2);
         self::assertTrue($re != false);

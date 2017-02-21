@@ -15,6 +15,10 @@ config auth_method
 - Login by name and access_token: 2
 - Login by access_token only: 4
 - Login with user_id only: 8
+- Login by email and password: 16
+- Login by email and access_token: 32
+- Login by tel and password: 64
+- Login by tel and access_token: 128
 
 And login TTL, config token_ttl
 - Login once (config token_ttl with 0, no cache)
@@ -53,20 +57,49 @@ $re = $u->active();
 
 - OAuth
 ```
-$auth = new \Wwtg99\PgAuth\Auth\OAuthServer($conn, $config);
+$pool = new \Wwtg99\DataPool\Common\DefaultDataPool('../conf.json');
+$conn = $pool->getConnection('main');
+$config = [
+    "cache"=>[
+        "type"=>"redis",
+        "options"=>[
+            "schema"=>"tcp",
+            "host"=>"192.168.83.128",
+            "database"=>4
+        ]
+    ],
+    'auth_method'=>7,
+    'token_ttl'=>60,
+    'code_ttl'=>60
+];
+$appu = new \Wwtg99\PgAuth\Utils\AppUtils($conn);
 //step 1 get code
-$app_id = 'asmfi2fnn'; //app id
-$url = 'http://localhost'; //redirect url
 $user1 = ['username'=>'u1', 'password'=>'2'];
-$code = $auth->getCode($app_id, $url, $user1);
+$aid = 'asfafs';
+$redirect_uri = 'localhost';
+$auth = new \Wwtg99\PgAuth\Auth\NormalAuth($conn, $config);
+$oauth = new \Wwtg99\PgAuth\Utils\OAuthUtils($config);
+$code = '';
+$app = $appu->verifyAppIdUri($aid, $redirect_uri);
+if ($app) {
+    $u = $auth->signIn($user1);
+    if ($u) {
+        $code = $oauth->generateCode($u->getUserArray(), $aid, $redirect_uri);
+        echo "\nCode: $code";
+    }
+}
 //step 2 get access_token
-$secret = 'asdfasfawefas'; //app secret
-$u = $auth->signIn(['code'=>$code, 'app_secret'=>$secret]);
-$token = $u->getUser()[\Wwtg99\PgAuth\Auth\IUser::FIELD_TOKEN];
-//verify token
-$user2 = ['access_token'=>$token];
-$re = $auth->verify($user2);
-var_dump($re);
+$secret = 'fasf3wfsdf';
+$u = $oauth->verifyCode($code);
+if ($u) {
+    $aid = $u['app_id'];
+    $re = $appu->verifySecret($aid, $secret);
+    if ($re) {
+        $token = $u['access_token'];
+        echo "\nUser: ";
+        print_r($u);
+    }
+}
 ```
 
 - Manage department (One user belongs to one department or not)
@@ -139,11 +172,6 @@ $re = $app->update($data_update, null, $aid);
 $re = $app->select();
 // get app by id
 $re = $app->get($aid);
-// get app by app_id and redirect_uri
-$re = $app->getApp($aid, 'http://localhost/path');
-// verify app
-$secret = 'XXXXX';
-$re = $app->verifySecret($aid, $secret, 'http://localhost/aa');
 // delete app
 $re = $app->delete($aid);
 ```

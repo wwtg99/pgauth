@@ -23,10 +23,11 @@ class UserTest extends PHPUnit_Framework_TestCase
                 "type"=>"redis",
                 "options"=>[
                     "schema"=>"tcp",
-                    "host"=>"192.168.0.21",
+                    "host"=>"192.168.83.128",
                     "database"=>4
                 ]
             ],
+            'auth_method'=>7,
             'token_ttl'=>60
         ];
         $auth = new \Wwtg99\PgAuth\Auth\NormalAuth($conn, $config);
@@ -40,7 +41,7 @@ class UserTest extends PHPUnit_Framework_TestCase
         echo "\nSign in: " . $auth->getMessage();
         self::assertNotNull($u);
 //        var_dump($u->getUser());
-        $token = $u->getUser()[\Wwtg99\PgAuth\Auth\IUser::FIELD_TOKEN];
+        $token = $u->getUserArray()[\Wwtg99\PgAuth\Auth\IUser::FIELD_TOKEN];
         $user3 = [\Wwtg99\PgAuth\Auth\IAuth::KEY_TOKEN=>$token, \Wwtg99\PgAuth\Auth\IAuth::KEY_USERNAME=>'u1'];
         $re = $auth->verify($user3);
         echo "\nVerify: " . $auth->getMessage();
@@ -49,7 +50,7 @@ class UserTest extends PHPUnit_Framework_TestCase
         $user4 = ['label'=>'user 111', 'descr'=>'aaaa'];
         $re = $u->changeInfo($user4);
         self::assertTrue($re);
-        self::assertEquals('user 111', $u->getUser()['label']);
+        self::assertEquals('user 111', $u->getUserArray()['label']);
         //inactive
         $re = $u->inactive();
         self::assertTrue($re);
@@ -79,32 +80,44 @@ class UserTest extends PHPUnit_Framework_TestCase
                 "type"=>"redis",
                 "options"=>[
                     "schema"=>"tcp",
-                    "host"=>"192.168.0.21",
+                    "host"=>"192.168.83.128",
                     "database"=>4
                 ]
             ],
-            'token_ttl'=>60
+            'auth_method'=>7,
+            'token_ttl'=>60,
+            'code_ttl'=>60
         ];
         $appModel = $conn->getMapper('App');
         $app1 = ['app_name'=>'test_app', 'redirect_uri'=>'localhost'];
         $aid = $appModel->insert($app1);
         self::assertTrue($aid != false);
-        $auth = new \Wwtg99\PgAuth\Auth\OAuthServer($conn, $config);
+        $appu = new \Wwtg99\PgAuth\Utils\AppUtils($conn);
         //step 1 get code
         $user1 = ['username'=>'u1', 'password'=>'2'];
-        $code = $auth->getCode($aid, 'http://localhost', $user1);
-        self::assertNotNull($code);
-        echo "\nCode: $code";
-        echo "\nGet code: " . $auth->getMessage();
+        $app = $appu->verifyAppIdUri($aid, $app1['redirect_uri']);
+        $this->assertNotFalse($app);
+        $auth = new \Wwtg99\PgAuth\Auth\NormalAuth($conn, $config);
+        $oauth = new \Wwtg99\PgAuth\Utils\OAuthUtils($config);
+        $code = '';
+        if ($app) {
+            $u = $auth->signIn($user1);
+            $this->assertNotNull($u);
+            if ($u) {
+                $code = $oauth->generateCode($u->getUserArray(), $aid, $app[\Wwtg99\PgAuth\Utils\AppUtils::FIELD_REDIRECT_URI]);
+                self::assertNotNull($code);
+                echo "\nCode: $code";
+            }
+        }
         //step 2 get access_token
         $secret = $appModel->get($aid, 'app_secret');
-        $u = $auth->signIn(['code'=>$code, 'app_secret'=>$secret]);
-        self::assertNotNull($u);
-        echo "\nSign in: " . $auth->getMessage();
-        $token = $u->getUser()[\Wwtg99\PgAuth\Auth\IUser::FIELD_TOKEN];
-        $user2 = [\Wwtg99\PgAuth\Auth\IAuth::KEY_TOKEN=>$token];
-        $re = $auth->verify($user2);
-        self::assertTrue($re);
-        echo "\nVerify: " . $auth->getMessage();
+        $re = $appu->verifySecret($aid, $secret);
+        $this->assertTrue($re);
+        if ($re) {
+            $u = $oauth->verifyCode($code);
+            $this->assertNotFalse($u);
+            echo "\nUser: ";
+            print_r($u);
+        }
     }
 }

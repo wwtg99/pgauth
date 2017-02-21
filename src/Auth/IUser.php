@@ -18,40 +18,19 @@ interface IUser
     const FIELD_ROLES = 'roles';
     const FIELD_LABEL = 'label';
     const FIELD_EMAIL = 'email';
+    const FIELD_TEL = 'tel';
     const FIELD_SUPERUSER = 'superuser';
     const FIELD_DEPARTMENT_ID = 'department_id';
     const FIELD_DEPARTMENT = 'department';
     const FIELD_TOKEN = 'access_token';
 
     /**
-     * @param array $user
-     * @return bool
-     */
-    public function changeInfo(array $user);
-
-    /**
-     * @param string $new
-     * @return bool
-     */
-    public function changePassword($new);
-
-    /**
      * @return array
      */
-    public function getUser();
+    public function getUserArray();
 
     /**
      * @return string
      */
     public function getId();
-
-    /**
-     * @return bool
-     */
-    public function active();
-
-    /**
-     * @return bool
-     */
-    public function inactive();
 }

@@ -13,6 +13,8 @@ interface IAuth
 {
 
     const KEY_USERNAME = 'username';
+    const KEY_EMAIL = 'email';
+    const KEY_TEL = 'tel';
     const KEY_PASSWORD = 'password';
     const KEY_TOKEN = 'access_token';
     const KEY_USER_ID = 'user_id';
