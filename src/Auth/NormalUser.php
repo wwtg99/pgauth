@@ -206,6 +206,7 @@ class NormalUser implements IUser
         if ($this->mapper) {
             $u = $this->mapper->view('*', [IUser::FIELD_USER_ID=>$this->userId]);
             if ($u && isset($u[0])) {
+                unset($u[0][self::FIELD_PASSWORD]);
                 $this->user = $u[0];
             }
             return $u[0];

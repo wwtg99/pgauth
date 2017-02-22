@@ -262,7 +262,7 @@ CREATE OR REPLACE VIEW public.view_user_role AS
   GROUP BY user_id;
 
 CREATE OR REPLACE VIEW public.view_users AS
-  SELECT users.user_id, users.name, users.label, email, tel,
+  SELECT users.user_id, users.name, users.label, email, tel, password,
     users.descr, departments.department_id, departments.name AS department,
     departments.descr AS department_descr, superuser, roles, users.params,
     users.created_at, users.updated_at, users.deleted_at

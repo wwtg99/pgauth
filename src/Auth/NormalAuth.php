@@ -439,12 +439,14 @@ class NormalAuth extends AbstractAuth
     protected function checkNamePassword($user)
     {
         $userModel = $this->conn->getMapper('User');
-        $u = $userModel->get(null, '*', ['AND'=>[IUser::FIELD_USER_NAME => $user[self::KEY_USERNAME], 'deleted_at'=>null]]);
-        if ($u) {
+        $u = $userModel->view('*', ['AND'=>[IUser::FIELD_USER_NAME => $user[self::KEY_USERNAME], 'deleted_at'=>null]]);
+        if ($u && isset($u[0])) {
+            $u = $u[0];
             $pwd = $u[IUser::FIELD_PASSWORD];
             if (is_null($pwd) || password_verify($user[self::KEY_PASSWORD], $pwd)) {
                 $uid = $u[IUser::FIELD_USER_ID];
                 $token = $this->generateToken($uid);
+                unset($u[IUser::FIELD_PASSWORD]);
                 $this->user = new NormalUser($uid, $u, $token);
                 if ($userModel instanceof User) {
                     $this->user->setMapper($userModel);
@@ -464,12 +466,14 @@ class NormalAuth extends AbstractAuth
     protected function checkEmailPassword($user)
     {
         $userModel = $this->conn->getMapper('User');
-        $u = $userModel->get(null, '*', ['AND'=>[IUser::FIELD_EMAIL => $user[self::KEY_EMAIL], 'deleted_at'=>null]]);
-        if ($u) {
+        $u = $userModel->view('*', ['AND'=>[IUser::FIELD_EMAIL => $user[self::KEY_EMAIL], 'deleted_at'=>null]]);
+        if ($u && isset($u[0])) {
+            $u = $u[0];
             $pwd = $u[IUser::FIELD_PASSWORD];
             if (is_null($pwd) || password_verify($user[self::KEY_PASSWORD], $pwd)) {
                 $uid = $u[IUser::FIELD_USER_ID];
                 $token = $this->generateToken($uid);
+                unset($u[IUser::FIELD_PASSWORD]);
                 $this->user = new NormalUser($uid, $u, $token);
                 if ($userModel instanceof User) {
                     $this->user->setMapper($userModel);
@@ -489,12 +493,14 @@ class NormalAuth extends AbstractAuth
     protected function checkTelPassword($user)
     {
         $userModel = $this->conn->getMapper('User');
-        $u = $userModel->get(null, '*', ['AND'=>[IUser::FIELD_TEL => $user[self::KEY_TEL], 'deleted_at'=>null]]);
-        if ($u) {
+        $u = $userModel->view('*', ['AND'=>[IUser::FIELD_TEL => $user[self::KEY_TEL], 'deleted_at'=>null]]);
+        if ($u && isset($u[0])) {
+            $u = $u[0];
             $pwd = $u[IUser::FIELD_PASSWORD];
             if (is_null($pwd) || password_verify($user[self::KEY_PASSWORD], $pwd)) {
                 $uid = $u[IUser::FIELD_USER_ID];
                 $token = $this->generateToken($uid);
+                unset($u[IUser::FIELD_PASSWORD]);
                 $this->user = new NormalUser($uid, $u, $token);
                 if ($userModel instanceof User) {
                     $this->user->setMapper($userModel);
@@ -515,9 +521,11 @@ class NormalAuth extends AbstractAuth
     {
         $userModel = $this->conn->getMapper('User');
         $uid = $user[self::KEY_USER_ID];
-        $u = $userModel->get(null, '*', ['AND'=>[IUser::FIELD_USER_ID => $uid, 'deleted_at'=>null]]);
-        if ($u) {
+        $u = $userModel->view(null, '*', ['AND'=>[IUser::FIELD_USER_ID => $uid, 'deleted_at'=>null]]);
+        if ($u && isset($u[0])) {
+            $u = $u[0];
             $token = $this->generateToken($uid);
+            unset($u[IUser::FIELD_PASSWORD]);
             $this->user = new NormalUser($uid, $u, $token);
             if ($userModel instanceof User) {
                 $this->user->setMapper($userModel);

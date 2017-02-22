@@ -1,3 +1,7 @@
+## 0.2.1
+- Update view_users
+- Update NormalAuth verify password methods
+
 ## 0.2.0
 - Change OAuth to utils
 - Add more verify methods
